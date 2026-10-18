@@ -1,0 +1,19 @@
+# Core
+pandas>=2.0.0
+numpy>=1.24
+pyarrow>=14.0
+python-dotenv>=1.0.0
+matplotlib>=3.7.0
+seaborn>=0.12
+
+# Azure SDKs (only needed when talking to ADLS / Event Hub)
+azure-storage-file-datalake>=12.14.0
+azure-eventhub>=5.11
+
+# Modeling
+scikit-learn>=1.4
+xgboost>=2.0
+
+# Notebooks
+jupyter>=1.0.0
+ipykernel>=6.0.0

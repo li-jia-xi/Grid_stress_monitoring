@@ -1,0 +1,39 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "factoryName": {
+            "value": "cds-ds562-sp26-team08-data-factory"
+        },
+        "ADLS_Bronze_accountKey": {
+            "value": ""
+        },
+        "pull_bronze_accountKey": {
+            "value": ""
+        },
+        "team8_source_adls_accountKey": {
+            "value": ""
+        },
+        "team8_sink_accountKey": {
+            "value": ""
+        },
+        "ADLS_Bronze_properties_typeProperties_url": {
+            "value": "https://team08ds591storage.dfs.core.windows.net/"
+        },
+        "ISO_NE_HTTP_properties_typeProperties_url": {
+            "value": "https://www.iso-ne.com/"
+        },
+        "EIA_API_HTTP_properties_typeProperties_url": {
+            "value": "https://api.eia.gov/v2/"
+        },
+        "pull_bronze_properties_typeProperties_url": {
+            "value": "https://team08ds591storage.dfs.core.windows.net/"
+        },
+        "team8_source_adls_properties_typeProperties_url": {
+            "value": "https://team08ds591storage.dfs.core.windows.net/"
+        },
+        "team8_sink_properties_typeProperties_url": {
+            "value": "https://team08ds591storage.dfs.core.windows.net/"
+        }
+    }
+}

@@ -1,0 +1,1331 @@
+{
+    "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "factoryName": {
+            "type": "string",
+            "metadata": "Data Factory name",
+            "defaultValue": "cds-ds562-sp26-team08-data-factory"
+        },
+        "ADLS_Bronze_accountKey": {
+            "type": "secureString",
+            "metadata": "Secure string for 'accountKey' of 'ADLS_Bronze'"
+        },
+        "pull_bronze_accountKey": {
+            "type": "secureString",
+            "metadata": "Secure string for 'accountKey' of 'pull_bronze'"
+        },
+        "team8_source_adls_accountKey": {
+            "type": "secureString",
+            "metadata": "Secure string for 'accountKey' of 'team8_source_adls'"
+        },
+        "team8_sink_accountKey": {
+            "type": "secureString",
+            "metadata": "Secure string for 'accountKey' of 'team8_sink'"
+        },
+        "ADLS_Bronze_properties_typeProperties_url": {
+            "type": "string",
+            "defaultValue": "https://team08ds591storage.dfs.core.windows.net/"
+        },
+        "ISO_NE_HTTP_properties_typeProperties_url": {
+            "type": "string",
+            "defaultValue": "https://www.iso-ne.com/"
+        },
+        "EIA_API_HTTP_properties_typeProperties_url": {
+            "type": "string",
+            "defaultValue": "https://api.eia.gov/v2/"
+        },
+        "pull_bronze_properties_typeProperties_url": {
+            "type": "string",
+            "defaultValue": "https://team08ds591storage.dfs.core.windows.net/"
+        },
+        "team8_source_adls_properties_typeProperties_url": {
+            "type": "string",
+            "defaultValue": "https://team08ds591storage.dfs.core.windows.net/"
+        },
+        "team8_sink_properties_typeProperties_url": {
+            "type": "string",
+            "defaultValue": "https://team08ds591storage.dfs.core.windows.net/"
+        }
+    },
+    "variables": {
+        "factoryId": "[concat('Microsoft.DataFactory/factories/', parameters('factoryName'))]"
+    },
+    "resources": [
+        {
+            "name": "[concat(parameters('factoryName'), '/ADLS_Bronze_ISO_NE')]",
+            "type": "Microsoft.DataFactory/factories/datasets",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "linkedServiceName": {
+                    "referenceName": "ADLS_Bronze",
+                    "type": "LinkedServiceReference"
+                },
+                "annotations": [],
+                "type": "Binary",
+                "typeProperties": {
+                    "location": {
+                        "type": "AzureBlobFSLocation",
+                        "fileName": "2026_peak_load.xlsx",
+                        "folderPath": "iso-ne-historical/peak-load",
+                        "fileSystem": "bronze"
+                    }
+                }
+            },
+            "dependsOn": [
+                "[concat(variables('factoryId'), '/linkedServices/ADLS_Bronze')]"
+            ]
+        },
+        {
+            "name": "[concat(parameters('factoryName'), '/ADLS_Bronze_Dynamic')]",
+            "type": "Microsoft.DataFactory/factories/datasets",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "linkedServiceName": {
+                    "referenceName": "ADLS_Bronze",
+                    "type": "LinkedServiceReference"
+                },
+                "parameters": {
+                    "folderPath": {
+                        "type": "string"
+                    },
+                    "fileName": {
+                        "type": "string"
+                    }
+                },
+                "annotations": [],
+                "type": "Binary",
+                "typeProperties": {
+                    "location": {
+                        "type": "AzureBlobFSLocation",
+                        "fileName": {
+                            "value": "@dataset().fileName",
+                            "type": "Expression"
+                        },
+                        "folderPath": {
+                            "value": "@dataset().folderPath",
+                            "type": "Expression"
+                        },
+                        "fileSystem": "bronze"
+                    }
+                }
+            },
+            "dependsOn": [
+                "[concat(variables('factoryId'), '/linkedServices/ADLS_Bronze')]"
+            ]
+        },
+        {
+            "name": "[concat(parameters('factoryName'), '/ISO_NE_HTTP_Source')]",
+            "type": "Microsoft.DataFactory/factories/datasets",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "linkedServiceName": {
+                    "referenceName": "ISO_NE_HTTP",
+                    "type": "LinkedServiceReference"
+                },
+                "parameters": {
+                    "relativeUrl": {
+                        "type": "string"
+                    }
+                },
+                "annotations": [],
+                "type": "Binary",
+                "typeProperties": {
+                    "location": {
+                        "type": "HttpServerLocation",
+                        "relativeUrl": {
+                            "value": "@dataset().relativeUrl",
+                            "type": "Expression"
+                        }
+                    }
+                }
+            },
+            "dependsOn": [
+                "[concat(variables('factoryId'), '/linkedServices/ISO_NE_HTTP')]"
+            ]
+        },
+        {
+            "name": "[concat(parameters('factoryName'), '/EIA_API_JSON_Source')]",
+            "type": "Microsoft.DataFactory/factories/datasets",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "linkedServiceName": {
+                    "referenceName": "EIA_API_HTTP",
+                    "type": "LinkedServiceReference"
+                },
+                "parameters": {
+                    "fullUrl": {
+                        "type": "string"
+                    }
+                },
+                "annotations": [],
+                "type": "Json",
+                "typeProperties": {
+                    "location": {
+                        "type": "HttpServerLocation",
+                        "relativeUrl": {
+                            "value": "@dataset().fullUrl",
+                            "type": "Expression"
+                        }
+                    }
+                },
+                "schema": {}
+            },
+            "dependsOn": [
+                "[concat(variables('factoryId'), '/linkedServices/EIA_API_HTTP')]"
+            ]
+        },
+        {
+            "name": "[concat(parameters('factoryName'), '/ADLS_Bronze_EIA_JSON')]",
+            "type": "Microsoft.DataFactory/factories/datasets",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "linkedServiceName": {
+                    "referenceName": "ADLS_Bronze",
+                    "type": "LinkedServiceReference"
+                },
+                "parameters": {
+                    "folderPath": {
+                        "type": "string"
+                    }
+                },
+                "annotations": [],
+                "type": "Json",
+                "typeProperties": {
+                    "location": {
+                        "type": "AzureBlobFSLocation",
+                        "fileName": "eia_consumption.json",
+                        "folderPath": {
+                            "value": "@dataset().folderPath",
+                            "type": "Expression"
+                        },
+                        "fileSystem": "bronze"
+                    }
+                },
+                "schema": {}
+            },
+            "dependsOn": [
+                "[concat(variables('factoryId'), '/linkedServices/ADLS_Bronze')]"
+            ]
+        },
+        {
+            "name": "[concat(parameters('factoryName'), '/ADLS_Bronze_ISO_NE_Demand')]",
+            "type": "Microsoft.DataFactory/factories/datasets",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "linkedServiceName": {
+                    "referenceName": "ADLS_Bronze",
+                    "type": "LinkedServiceReference"
+                },
+                "parameters": {
+                    "pDirectory": {
+                        "type": "string"
+                    },
+                    "pFileName": {
+                        "type": "string"
+                    }
+                },
+                "annotations": [],
+                "type": "DelimitedText",
+                "typeProperties": {
+                    "location": {
+                        "type": "AzureBlobFSLocation",
+                        "fileName": {
+                            "value": "@dataset().pFileName",
+                            "type": "Expression"
+                        },
+                        "folderPath": {
+                            "value": "@dataset().pDirectory",
+                            "type": "Expression"
+                        },
+                        "fileSystem": "bronze"
+                    },
+                    "columnDelimiter": ",",
+                    "escapeChar": "\\",
+                    "firstRowAsHeader": false,
+                    "quoteChar": "\""
+                },
+                "schema": []
+            },
+            "dependsOn": [
+                "[concat(variables('factoryId'), '/linkedServices/ADLS_Bronze')]"
+            ]
+        },
+        {
+            "name": "[concat(parameters('factoryName'), '/ISO_NE_HTTP_Demand')]",
+            "type": "Microsoft.DataFactory/factories/datasets",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "linkedServiceName": {
+                    "referenceName": "ISO_NE_HTTP",
+                    "type": "LinkedServiceReference"
+                },
+                "parameters": {
+                    "pDataDate": {
+                        "type": "string",
+                        "defaultValue": "YYYYMMDD"
+                    }
+                },
+                "annotations": [],
+                "type": "DelimitedText",
+                "typeProperties": {
+                    "location": {
+                        "type": "HttpServerLocation",
+                        "relativeUrl": {
+                            "value": "@concat('/transform/csv/fiveminutesystemload?start=', dataset().pDataDate, '&end=', dataset().pDataDate)",
+                            "type": "Expression"
+                        }
+                    },
+                    "columnDelimiter": ",",
+                    "escapeChar": "\\",
+                    "firstRowAsHeader": false,
+                    "quoteChar": "\""
+                },
+                "schema": []
+            },
+            "dependsOn": [
+                "[concat(variables('factoryId'), '/linkedServices/ISO_NE_HTTP')]"
+            ]
+        },
+        {
+            "name": "[concat(parameters('factoryName'), '/eia_batch_trasformed')]",
+            "type": "Microsoft.DataFactory/factories/datasets",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "linkedServiceName": {
+                    "referenceName": "team8_sink",
+                    "type": "LinkedServiceReference"
+                },
+                "annotations": [],
+                "type": "Parquet",
+                "typeProperties": {
+                    "location": {
+                        "type": "AzureBlobFSLocation",
+                        "folderPath": "eia-batch",
+                        "fileSystem": "silver"
+                    },
+                    "compressionCodec": "snappy"
+                },
+                "schema": []
+            },
+            "dependsOn": [
+                "[concat(variables('factoryId'), '/linkedServices/team8_sink')]"
+            ]
+        },
+        {
+            "name": "[concat(parameters('factoryName'), '/eia_json_bronze')]",
+            "type": "Microsoft.DataFactory/factories/datasets",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "linkedServiceName": {
+                    "referenceName": "team8_source_adls",
+                    "type": "LinkedServiceReference"
+                },
+                "annotations": [],
+                "type": "Json",
+                "typeProperties": {
+                    "location": {
+                        "type": "AzureBlobFSLocation",
+                        "folderPath": "eia/batch-20260326-215115",
+                        "fileSystem": "bronze"
+                    }
+                },
+                "schema": {
+                    "type": "object",
+                    "properties": {
+                        "response": {
+                            "type": "object",
+                            "properties": {
+                                "total": {
+                                    "type": "string"
+                                },
+                                "dateFormat": {
+                                    "type": "string"
+                                },
+                                "frequency": {
+                                    "type": "string"
+                                },
+                                "data": {
+                                    "type": "array",
+                                    "items": {
+                                        "type": "object",
+                                        "properties": {
+                                            "period": {
+                                                "type": "string"
+                                            },
+                                            "stateid": {
+                                                "type": "string"
+                                            },
+                                            "stateDescription": {
+                                                "type": "string"
+                                            },
+                                            "sectorid": {
+                                                "type": "string"
+                                            },
+                                            "sectorName": {
+                                                "type": "string"
+                                            },
+                                            "customers": {
+                                                "type": "string"
+                                            },
+                                            "sales": {
+                                                "type": "string"
+                                            },
+                                            "customers-units": {
+                                                "type": "string"
+                                            },
+                                            "sales-units": {
+                                                "type": "string"
+                                            }
+                                        }
+                                    }
+                                },
+                                "description": {
+                                    "type": "string"
+                                }
+                            }
+                        },
+                        "request": {
+                            "type": "object",
+                            "properties": {
+                                "command": {
+                                    "type": "string"
+                                },
+                                "params": {
+                                    "type": "object",
+                                    "properties": {
+                                        "frequency": {
+                                            "type": "string"
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "string"
+                                            }
+                                        },
+                                        "facets": {
+                                            "type": "object",
+                                            "properties": {
+                                                "stateid": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "string"
+                                                    }
+                                                },
+                                                "sectorid": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "string"
+                                                    }
+                                                }
+                                            }
+                                        },
+                                        "start": {
+                                            "type": "string"
+                                        },
+                                        "end": {
+                                            "type": "string"
+                                        },
+                                        "sort": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "object",
+                                                "properties": {
+                                                    "column": {
+                                                        "type": "string"
+                                                    },
+                                                    "direction": {
+                                                        "type": "string"
+                                                    }
+                                                }
+                                            }
+                                        },
+                                        "offset": {
+                                            "type": "string"
+                                        },
+                                        "length": {
+                                            "type": "string"
+                                        },
+                                        "api_key": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        },
+                        "apiVersion": {
+                            "type": "string"
+                        },
+                        "ExcelAddInVersion": {
+                            "type": "string"
+                        }
+                    }
+                }
+            },
+            "dependsOn": [
+                "[concat(variables('factoryId'), '/linkedServices/team8_source_adls')]"
+            ]
+        },
+        {
+            "name": "[concat(parameters('factoryName'), '/team8_batch_bronze_to_silver')]",
+            "type": "Microsoft.DataFactory/factories/dataflows",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "type": "MappingDataFlow",
+                "typeProperties": {
+                    "sources": [
+                        {
+                            "dataset": {
+                                "referenceName": "eia_json_bronze",
+                                "type": "DatasetReference"
+                            },
+                            "name": "EIAfromBronze"
+                        }
+                    ],
+                    "sinks": [
+                        {
+                            "dataset": {
+                                "referenceName": "eia_batch_trasformed",
+                                "type": "DatasetReference"
+                            },
+                            "name": "outputSilver"
+                        }
+                    ],
+                    "transformations": [
+                        {
+                            "name": "flattenEIAcols"
+                        },
+                        {
+                            "name": "checkNulls"
+                        }
+                    ],
+                    "scriptLines": [
+                        "source(output(",
+                        "          response as (total as string, dateFormat as string, frequency as string, data as (period as string, stateid as string, stateDescription as string, sectorid as string, sectorName as string, customers as string, sales as string, {customers-units} as string, {sales-units} as string)[], description as string),",
+                        "          request as (command as string, params as (frequency as string, data as string[], facets as (stateid as string[], sectorid as string[]), start as string, end as string, sort as (column as string, direction as string)[], offset as string, length as string, api_key as string)),",
+                        "          apiVersion as string,",
+                        "          ExcelAddInVersion as string",
+                        "     ),",
+                        "     allowSchemaDrift: true,",
+                        "     validateSchema: false,",
+                        "     ignoreNoFilesFound: false,",
+                        "     documentForm: 'documentPerLine') ~> EIAfromBronze",
+                        "EIAfromBronze foldDown(unroll(response.data),",
+                        "     mapColumn(",
+                        "          total = response.total,",
+                        "          dateFormat = response.dateFormat,",
+                        "          frequency = response.frequency,",
+                        "          period = response.data.period,",
+                        "          stateid = response.data.stateid,",
+                        "          stateDescription = response.data.stateDescription,",
+                        "          sectorid = response.data.sectorid,",
+                        "          sectorName = response.data.sectorName,",
+                        "          customers = response.data.customers,",
+                        "          sales = response.data.sales,",
+                        "          {customers-units} = response.data.{customers-units},",
+                        "          {sales-units} = response.data.{sales-units},",
+                        "          description = response.description",
+                        "     ),",
+                        "     skipDuplicateMapInputs: false,",
+                        "     skipDuplicateMapOutputs: false) ~> flattenEIAcols",
+                        "flattenEIAcols filter(!isNull(stateid) && !isNull(dateFormat)) ~> checkNulls",
+                        "checkNulls sink(allowSchemaDrift: true,",
+                        "     validateSchema: false,",
+                        "     format: 'parquet',",
+                        "     umask: 0022,",
+                        "     preCommands: [],",
+                        "     postCommands: [],",
+                        "     skipDuplicateMapInputs: true,",
+                        "     skipDuplicateMapOutputs: true) ~> outputSilver"
+                    ]
+                }
+            },
+            "dependsOn": [
+                "[concat(variables('factoryId'), '/datasets/eia_json_bronze')]",
+                "[concat(variables('factoryId'), '/datasets/eia_batch_trasformed')]"
+            ]
+        },
+        {
+            "name": "[concat(parameters('factoryName'), '/ADLS_Bronze')]",
+            "type": "Microsoft.DataFactory/factories/linkedServices",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "annotations": [],
+                "type": "AzureBlobFS",
+                "typeProperties": {
+                    "url": "[parameters('ADLS_Bronze_properties_typeProperties_url')]",
+                    "accountKey": {
+                        "type": "SecureString",
+                        "value": "[parameters('ADLS_Bronze_accountKey')]"
+                    }
+                }
+            },
+            "dependsOn": []
+        },
+        {
+            "name": "[concat(parameters('factoryName'), '/ISO_NE_HTTP')]",
+            "type": "Microsoft.DataFactory/factories/linkedServices",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "annotations": [],
+                "type": "HttpServer",
+                "typeProperties": {
+                    "url": "[parameters('ISO_NE_HTTP_properties_typeProperties_url')]",
+                    "enableServerCertificateValidation": true,
+                    "authenticationType": "Anonymous"
+                }
+            },
+            "dependsOn": []
+        },
+        {
+            "name": "[concat(parameters('factoryName'), '/EIA_API_HTTP')]",
+            "type": "Microsoft.DataFactory/factories/linkedServices",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "annotations": [],
+                "type": "HttpServer",
+                "typeProperties": {
+                    "url": "[parameters('EIA_API_HTTP_properties_typeProperties_url')]",
+                    "enableServerCertificateValidation": true,
+                    "authenticationType": "Anonymous"
+                }
+            },
+            "dependsOn": []
+        },
+        {
+            "name": "[concat(parameters('factoryName'), '/pull_bronze')]",
+            "type": "Microsoft.DataFactory/factories/linkedServices",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "annotations": [],
+                "type": "AzureBlobFS",
+                "typeProperties": {
+                    "url": "[parameters('pull_bronze_properties_typeProperties_url')]",
+                    "accountKey": {
+                        "type": "SecureString",
+                        "value": "[parameters('pull_bronze_accountKey')]"
+                    }
+                }
+            },
+            "dependsOn": []
+        },
+        {
+            "name": "[concat(parameters('factoryName'), '/team8_source_adls')]",
+            "type": "Microsoft.DataFactory/factories/linkedServices",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "annotations": [],
+                "type": "AzureBlobFS",
+                "typeProperties": {
+                    "url": "[parameters('team8_source_adls_properties_typeProperties_url')]",
+                    "accountKey": {
+                        "type": "SecureString",
+                        "value": "[parameters('team8_source_adls_accountKey')]"
+                    }
+                }
+            },
+            "dependsOn": []
+        },
+        {
+            "name": "[concat(parameters('factoryName'), '/team8_sink')]",
+            "type": "Microsoft.DataFactory/factories/linkedServices",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "annotations": [],
+                "type": "AzureBlobFS",
+                "typeProperties": {
+                    "url": "[parameters('team8_sink_properties_typeProperties_url')]",
+                    "accountKey": {
+                        "type": "SecureString",
+                        "value": "[parameters('team8_sink_accountKey')]"
+                    }
+                }
+            },
+            "dependsOn": []
+        },
+        {
+            "name": "[concat(parameters('factoryName'), '/Ingest_ISO_NE_Peak_Load_All_Years')]",
+            "type": "Microsoft.DataFactory/factories/pipelines",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "activities": [
+                    {
+                        "name": "Loop_Peak_Load_Years",
+                        "type": "ForEach",
+                        "dependsOn": [],
+                        "userProperties": [],
+                        "typeProperties": {
+                            "items": {
+                                "value": "@pipeline().parameters.peakLoadFiles",
+                                "type": "Expression"
+                            },
+                            "activities": [
+                                {
+                                    "name": "Copy_Peak_Load_File",
+                                    "type": "Copy",
+                                    "dependsOn": [],
+                                    "policy": {
+                                        "timeout": "0.12:00:00",
+                                        "retry": 0,
+                                        "retryIntervalInSeconds": 30,
+                                        "secureOutput": false,
+                                        "secureInput": false
+                                    },
+                                    "userProperties": [],
+                                    "typeProperties": {
+                                        "source": {
+                                            "type": "BinarySource",
+                                            "storeSettings": {
+                                                "type": "HttpReadSettings",
+                                                "requestMethod": "GET"
+                                            },
+                                            "formatSettings": {
+                                                "type": "BinaryReadSettings"
+                                            }
+                                        },
+                                        "sink": {
+                                            "type": "BinarySink",
+                                            "storeSettings": {
+                                                "type": "AzureBlobFSWriteSettings"
+                                            }
+                                        },
+                                        "enableStaging": false
+                                    },
+                                    "inputs": [
+                                        {
+                                            "referenceName": "ISO_NE_HTTP_Source",
+                                            "type": "DatasetReference",
+                                            "parameters": {
+                                                "relativeUrl": {
+                                                    "value": "@item().url",
+                                                    "type": "Expression"
+                                                }
+                                            }
+                                        }
+                                    ],
+                                    "outputs": [
+                                        {
+                                            "referenceName": "ADLS_Bronze_Dynamic",
+                                            "type": "DatasetReference",
+                                            "parameters": {
+                                                "folderPath": {
+                                                    "value": "iso-ne-historical/peak-load",
+                                                    "type": "Expression"
+                                                },
+                                                "fileName": {
+                                                    "value": "@concat(item().year, '_peak_load.xlsx')",
+                                                    "type": "Expression"
+                                                }
+                                            }
+                                        }
+                                    ]
+                                }
+                            ]
+                        }
+                    }
+                ],
+                "policy": {
+                    "elapsedTimeMetric": {}
+                },
+                "parameters": {
+                    "peakLoadFiles": {
+                        "type": "array",
+                        "defaultValue": [
+                            {
+                                "year": "2026",
+                                "url": "static-assets/documents/100032/2026_energy_peak_by_source.xlsx"
+                            },
+                            {
+                                "year": "2025",
+                                "url": "static-assets/documents/100020/2025_energy_peak_by_source.xlsx"
+                            },
+                            {
+                                "year": "2024",
+                                "url": "static-assets/documents/100008/2024_energy_peak_by_source.xlsx"
+                            },
+                            {
+                                "year": "2023",
+                                "url": "static-assets/documents/2023/02/2023_energy_peak_by_source.xlsx"
+                            },
+                            {
+                                "year": "2022",
+                                "url": "static-assets/documents/2022/02/2022_energy_peak_by_source.xlsx"
+                            },
+                            {
+                                "year": "2021",
+                                "url": "static-assets/documents/2021/02/2021_energy_peak_by_source.xlsx"
+                            },
+                            {
+                                "year": "2020",
+                                "url": "static-assets/documents/2020/02/2020_energy_peak_by_source.xlsx"
+                            },
+                            {
+                                "year": "2019",
+                                "url": "static-assets/documents/2019/02/2019_energy_peak_by_source.xlsx"
+                            },
+                            {
+                                "year": "2018",
+                                "url": "static-assets/documents/2018/02/2018_energy_peak_by_source.xlsx"
+                            },
+                            {
+                                "year": "2017",
+                                "url": "static-assets/documents/2017/02/2017_energy_peak_by_source.xlsx"
+                            },
+                            {
+                                "year": "2016",
+                                "url": "static-assets/documents/2016/09/2016_energy_peak_by_source.xlsx"
+                            }
+                        ]
+                    }
+                },
+                "annotations": [],
+                "lastPublishTime": "2026-03-25T22:08:25Z"
+            },
+            "dependsOn": [
+                "[concat(variables('factoryId'), '/datasets/ISO_NE_HTTP_Source')]",
+                "[concat(variables('factoryId'), '/datasets/ADLS_Bronze_Dynamic')]"
+            ]
+        },
+        {
+            "name": "[concat(parameters('factoryName'), '/Ingest_EIA_Consumption_Data')]",
+            "type": "Microsoft.DataFactory/factories/pipelines",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "activities": [
+                    {
+                        "name": "Generate_Timestamp",
+                        "type": "SetVariable",
+                        "dependsOn": [],
+                        "policy": {
+                            "secureOutput": false,
+                            "secureInput": false
+                        },
+                        "userProperties": [],
+                        "typeProperties": {
+                            "variableName": "timestamp",
+                            "value": {
+                                "value": "@formatDateTime(utcNow(), 'yyyyMMdd-HHmmss')",
+                                "type": "Expression"
+                            }
+                        }
+                    },
+                    {
+                        "name": "Copy_EIA_Data",
+                        "type": "Copy",
+                        "dependsOn": [
+                            {
+                                "activity": "Generate_Timestamp",
+                                "dependencyConditions": [
+                                    "Succeeded"
+                                ]
+                            }
+                        ],
+                        "policy": {
+                            "timeout": "0.12:00:00",
+                            "retry": 0,
+                            "retryIntervalInSeconds": 30,
+                            "secureOutput": false,
+                            "secureInput": false
+                        },
+                        "userProperties": [],
+                        "typeProperties": {
+                            "source": {
+                                "type": "JsonSource",
+                                "storeSettings": {
+                                    "type": "HttpReadSettings",
+                                    "requestMethod": "GET"
+                                },
+                                "formatSettings": {
+                                    "type": "JsonReadSettings"
+                                }
+                            },
+                            "sink": {
+                                "type": "JsonSink",
+                                "storeSettings": {
+                                    "type": "AzureBlobFSWriteSettings"
+                                },
+                                "formatSettings": {
+                                    "type": "JsonWriteSettings"
+                                }
+                            },
+                            "enableStaging": false
+                        },
+                        "inputs": [
+                            {
+                                "referenceName": "EIA_API_JSON_Source",
+                                "type": "DatasetReference",
+                                "parameters": {
+                                    "fullUrl": {
+                                        "value": "@concat('electricity/retail-sales/data/?frequency=monthly&data[0]=customers&data[1]=sales&facets[stateid][]=CT&facets[stateid][]=MA&facets[stateid][]=ME&facets[stateid][]=NH&facets[stateid][]=RI&facets[stateid][]=VT&facets[sectorid][]=COM&facets[sectorid][]=IND&facets[sectorid][]=RES&start=2016-01&end=2025-12&sort[0][column]=period&sort[0][direction]=desc&offset=0&length=5000&api_key=', pipeline().parameters.apiKey)",
+                                        "type": "Expression"
+                                    }
+                                }
+                            }
+                        ],
+                        "outputs": [
+                            {
+                                "referenceName": "ADLS_Bronze_EIA_JSON",
+                                "type": "DatasetReference",
+                                "parameters": {
+                                    "folderPath": {
+                                        "value": "@concat('eia/batch-', variables('timestamp'))\n",
+                                        "type": "Expression"
+                                    }
+                                }
+                            }
+                        ]
+                    }
+                ],
+                "policy": {
+                    "elapsedTimeMetric": {}
+                },
+                "parameters": {
+                    "apiKey": {
+                        "type": "string",
+                        "defaultValue": "<YOUR_EIA_API_KEY>"
+                    }
+                },
+                "variables": {
+                    "timestamp": {
+                        "type": "String"
+                    }
+                },
+                "annotations": [],
+                "lastPublishTime": "2026-03-26T21:53:34Z"
+            },
+            "dependsOn": [
+                "[concat(variables('factoryId'), '/datasets/EIA_API_JSON_Source')]",
+                "[concat(variables('factoryId'), '/datasets/ADLS_Bronze_EIA_JSON')]"
+            ]
+        },
+        {
+            "name": "[concat(parameters('factoryName'), '/Ingest_ISO_NE_Capacity_Data')]",
+            "type": "Microsoft.DataFactory/factories/pipelines",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "activities": [
+                    {
+                        "name": "Loop_Capacity_Months",
+                        "type": "ForEach",
+                        "dependsOn": [],
+                        "userProperties": [],
+                        "typeProperties": {
+                            "items": {
+                                "value": "@pipeline().parameters.capacityFiles",
+                                "type": "Expression"
+                            },
+                            "activities": [
+                                {
+                                    "name": "Copy_Capacity_File",
+                                    "type": "Copy",
+                                    "dependsOn": [],
+                                    "policy": {
+                                        "timeout": "0.12:00:00",
+                                        "retry": 0,
+                                        "retryIntervalInSeconds": 30,
+                                        "secureOutput": false,
+                                        "secureInput": false
+                                    },
+                                    "userProperties": [],
+                                    "typeProperties": {
+                                        "source": {
+                                            "type": "BinarySource",
+                                            "storeSettings": {
+                                                "type": "HttpReadSettings",
+                                                "requestMethod": "GET"
+                                            },
+                                            "formatSettings": {
+                                                "type": "BinaryReadSettings"
+                                            }
+                                        },
+                                        "sink": {
+                                            "type": "BinarySink",
+                                            "storeSettings": {
+                                                "type": "AzureBlobFSWriteSettings"
+                                            }
+                                        },
+                                        "enableStaging": false
+                                    },
+                                    "inputs": [
+                                        {
+                                            "referenceName": "ISO_NE_HTTP_Source",
+                                            "type": "DatasetReference",
+                                            "parameters": {
+                                                "relativeUrl": {
+                                                    "value": "@item().url",
+                                                    "type": "Expression"
+                                                }
+                                            }
+                                        }
+                                    ],
+                                    "outputs": [
+                                        {
+                                            "referenceName": "ADLS_Bronze_Dynamic",
+                                            "type": "DatasetReference",
+                                            "parameters": {
+                                                "folderPath": {
+                                                    "value": "iso-ne-historical/capacity",
+                                                    "type": "Expression"
+                                                },
+                                                "fileName": {
+                                                    "value": "@concat(item().month, '_capacity.xlsx')",
+                                                    "type": "Expression"
+                                                }
+                                            }
+                                        }
+                                    ]
+                                }
+                            ]
+                        }
+                    }
+                ],
+                "policy": {
+                    "elapsedTimeMetric": {}
+                },
+                "parameters": {
+                    "capacityFiles": {
+                        "type": "array",
+                        "defaultValue": [
+                            {
+                                "month": "2026-03",
+                                "url": "static-assets/documents/100033/scc_march_2026.xlsx"
+                            },
+                            {
+                                "month": "2026-02",
+                                "url": "static-assets/documents/100032/scc_february_2026.xlsx"
+                            },
+                            {
+                                "month": "2026-01",
+                                "url": "static-assets/documents/100031/scc_january_2026.xlsx"
+                            },
+                            {
+                                "month": "2025-12",
+                                "url": "static-assets/documents/100030/scc_december_2025.xlsx"
+                            },
+                            {
+                                "month": "2025-11",
+                                "url": "static-assets/documents/100029/scc_november_2025.xlsx"
+                            },
+                            {
+                                "month": "2025-10",
+                                "url": "static-assets/documents/100028/scc_october_2025.xlsx"
+                            },
+                            {
+                                "month": "2025-09",
+                                "url": "static-assets/documents/100027/scc_september_2025.xlsx"
+                            },
+                            {
+                                "month": "2025-08",
+                                "url": "static-assets/documents/100026/scc_august_2025.xlsx"
+                            },
+                            {
+                                "month": "2025-07",
+                                "url": "static-assets/documents/100025/scc_july_2025.xlsx"
+                            },
+                            {
+                                "month": "2025-06",
+                                "url": "static-assets/documents/100024/scc_june_2025.xlsx"
+                            },
+                            {
+                                "month": "2025-05",
+                                "url": "static-assets/documents/100023/scc_may_2025.xlsx"
+                            },
+                            {
+                                "month": "2025-04",
+                                "url": "static-assets/documents/100022/scc_april_2025.xlsx"
+                            },
+                            {
+                                "month": "2025-03",
+                                "url": "static-assets/documents/100021/scc_march_2025.xlsx"
+                            },
+                            {
+                                "month": "2025-02",
+                                "url": "static-assets/documents/100020/scc_february_2025.xlsx"
+                            },
+                            {
+                                "month": "2025-01",
+                                "url": "static-assets/documents/100019/scc_january_2025.xlsx"
+                            },
+                            {
+                                "month": "2024-12",
+                                "url": "static-assets/documents/100018/scc_december_2024.xlsx"
+                            },
+                            {
+                                "month": "2024-11",
+                                "url": "static-assets/documents/100017/scc_november_2024.xlsx"
+                            },
+                            {
+                                "month": "2024-10",
+                                "url": "static-assets/documents/100016/scc_october_2024.xlsx"
+                            },
+                            {
+                                "month": "2024-09",
+                                "url": "static-assets/documents/100015/scc_september_2024.xlsx"
+                            },
+                            {
+                                "month": "2024-08",
+                                "url": "static-assets/documents/100014/scc_august_2024.xlsx"
+                            },
+                            {
+                                "month": "2024-07",
+                                "url": "static-assets/documents/100013/scc_july_2024.xlsx"
+                            },
+                            {
+                                "month": "2024-06",
+                                "url": "static-assets/documents/100012/scc_june_2024.xlsx"
+                            },
+                            {
+                                "month": "2024-05",
+                                "url": "static-assets/documents/100011/scc_may_2024.xlsx"
+                            },
+                            {
+                                "month": "2024-04",
+                                "url": "static-assets/documents/100010/scc_april_2024.xlsx"
+                            },
+                            {
+                                "month": "2024-03",
+                                "url": "static-assets/documents/100009/scc_march_2024.xlsx"
+                            },
+                            {
+                                "month": "2024-02",
+                                "url": "static-assets/documents/100008/scc_february_2024.xlsx"
+                            },
+                            {
+                                "month": "2024-01",
+                                "url": "static-assets/documents/100007/scc_january_2024.xlsx"
+                            }
+                        ]
+                    }
+                },
+                "annotations": [],
+                "lastPublishTime": "2026-03-26T20:08:14Z"
+            },
+            "dependsOn": [
+                "[concat(variables('factoryId'), '/datasets/ISO_NE_HTTP_Source')]",
+                "[concat(variables('factoryId'), '/datasets/ADLS_Bronze_Dynamic')]"
+            ]
+        },
+        {
+            "name": "[concat(parameters('factoryName'), '/Ingest_ISO__NE_Streaming_Demand')]",
+            "type": "Microsoft.DataFactory/factories/pipelines",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "activities": [
+                    {
+                        "name": "Set_DataDate",
+                        "type": "SetVariable",
+                        "dependsOn": [],
+                        "policy": {
+                            "secureOutput": false,
+                            "secureInput": false
+                        },
+                        "userProperties": [],
+                        "typeProperties": {
+                            "variableName": "vDataDate",
+                            "value": {
+                                "value": "@formatDateTime(addDays(convertFromUtc(utcNow(), 'Eastern Standard Time'), -1), 'yyyyMMdd')",
+                                "type": "Expression"
+                            }
+                        }
+                    },
+                    {
+                        "name": "Set_IngestTimestamp",
+                        "type": "SetVariable",
+                        "dependsOn": [
+                            {
+                                "activity": "Set_DataDate",
+                                "dependencyConditions": [
+                                    "Succeeded"
+                                ]
+                            }
+                        ],
+                        "policy": {
+                            "secureOutput": false,
+                            "secureInput": false
+                        },
+                        "userProperties": [],
+                        "typeProperties": {
+                            "variableName": "vIngestTimestamp",
+                            "value": {
+                                "value": "@formatDateTime(convertFromUtc(utcNow(), 'Eastern Standard Time'), 'yyyyMMdd_HHmm')",
+                                "type": "Expression"
+                            }
+                        }
+                    },
+                    {
+                        "name": "Set_FileName",
+                        "type": "SetVariable",
+                        "dependsOn": [
+                            {
+                                "activity": "Set_IngestTimestamp",
+                                "dependencyConditions": [
+                                    "Succeeded"
+                                ]
+                            }
+                        ],
+                        "policy": {
+                            "secureOutput": false,
+                            "secureInput": false
+                        },
+                        "userProperties": [],
+                        "typeProperties": {
+                            "variableName": "vFileName",
+                            "value": {
+                                "value": "@concat('iso_ne_5min_demand_', variables('vDataDate'), '_ingested_', variables('vIngestTimestamp'), '.csv')",
+                                "type": "Expression"
+                            }
+                        }
+                    },
+                    {
+                        "name": "Copy_ISO_NE_Stream_Demand",
+                        "type": "Copy",
+                        "dependsOn": [
+                            {
+                                "activity": "Set_FileName",
+                                "dependencyConditions": [
+                                    "Succeeded"
+                                ]
+                            }
+                        ],
+                        "policy": {
+                            "timeout": "0.12:00:00",
+                            "retry": 0,
+                            "retryIntervalInSeconds": 30,
+                            "secureOutput": false,
+                            "secureInput": false
+                        },
+                        "userProperties": [],
+                        "typeProperties": {
+                            "source": {
+                                "type": "DelimitedTextSource",
+                                "storeSettings": {
+                                    "type": "HttpReadSettings",
+                                    "requestMethod": "GET",
+                                    "requestTimeout": "00:05:00"
+                                },
+                                "formatSettings": {
+                                    "type": "DelimitedTextReadSettings"
+                                }
+                            },
+                            "sink": {
+                                "type": "DelimitedTextSink",
+                                "storeSettings": {
+                                    "type": "AzureBlobFSWriteSettings"
+                                },
+                                "formatSettings": {
+                                    "type": "DelimitedTextWriteSettings",
+                                    "quoteAllText": true,
+                                    "fileExtension": ".txt"
+                                }
+                            },
+                            "enableStaging": false,
+                            "translator": {
+                                "type": "TabularTranslator",
+                                "typeConversion": true,
+                                "typeConversionSettings": {
+                                    "allowDataTruncation": true,
+                                    "treatBooleanAsNumber": false
+                                }
+                            }
+                        },
+                        "inputs": [
+                            {
+                                "referenceName": "ISO_NE_HTTP_Demand",
+                                "type": "DatasetReference",
+                                "parameters": {
+                                    "pDataDate": {
+                                        "value": "@variables('vDataDate')",
+                                        "type": "Expression"
+                                    }
+                                }
+                            }
+                        ],
+                        "outputs": [
+                            {
+                                "referenceName": "ADLS_Bronze_ISO_NE_Demand",
+                                "type": "DatasetReference",
+                                "parameters": {
+                                    "pDirectory": {
+                                        "value": "@concat('iso-ne/five-min-demand/year=', substring(variables('vDataDate'),0,4), '/month=', substring(variables('vDataDate'),4,2))",
+                                        "type": "Expression"
+                                    },
+                                    "pFileName": {
+                                        "value": "@variables('vFileName')",
+                                        "type": "Expression"
+                                    }
+                                }
+                            }
+                        ]
+                    }
+                ],
+                "policy": {
+                    "elapsedTimeMetric": {}
+                },
+                "variables": {
+                    "vDataDate": {
+                        "type": "String"
+                    },
+                    "vIngestTimestamp": {
+                        "type": "String"
+                    },
+                    "vFileName": {
+                        "type": "String"
+                    }
+                },
+                "annotations": [],
+                "lastPublishTime": "2026-04-16T21:22:42Z"
+            },
+            "dependsOn": [
+                "[concat(variables('factoryId'), '/datasets/ISO_NE_HTTP_Demand')]",
+                "[concat(variables('factoryId'), '/datasets/ADLS_Bronze_ISO_NE_Demand')]"
+            ]
+        },
+        {
+            "name": "[concat(parameters('factoryName'), '/run_eia_transformation_to_silver')]",
+            "type": "Microsoft.DataFactory/factories/pipelines",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "activities": [
+                    {
+                        "name": "run_dataflow_batch",
+                        "type": "ExecuteDataFlow",
+                        "dependsOn": [],
+                        "policy": {
+                            "timeout": "0.12:00:00",
+                            "retry": 0,
+                            "retryIntervalInSeconds": 30,
+                            "secureOutput": false,
+                            "secureInput": false
+                        },
+                        "userProperties": [],
+                        "typeProperties": {
+                            "dataflow": {
+                                "referenceName": "team8_batch_bronze_to_silver",
+                                "type": "DataFlowReference",
+                                "parameters": {},
+                                "datasetParameters": {
+                                    "EIAfromBronze": {},
+                                    "outputSilver": {}
+                                }
+                            },
+                            "staging": {},
+                            "compute": {
+                                "coreCount": 8,
+                                "computeType": "General"
+                            },
+                            "traceLevel": "Fine"
+                        }
+                    }
+                ],
+                "policy": {
+                    "elapsedTimeMetric": {}
+                },
+                "annotations": [],
+                "lastPublishTime": "2026-05-03T20:43:32Z"
+            },
+            "dependsOn": [
+                "[concat(variables('factoryId'), '/dataflows/team8_batch_bronze_to_silver')]"
+            ]
+        }
+    ]
+}
